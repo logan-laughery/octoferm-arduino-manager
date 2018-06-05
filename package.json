@@ -1,0 +1,21 @@
+{
+  "name": "octoferm-arduino-manager",
+  "version": "1.0.0",
+  "description": "A simple test for controlling an arduino over bluetooth",
+  "main": "node-led-control.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Logan Laughery",
+  "license": "ISC",
+  "dependencies": {
+    "bluetooth-serial-port": "^2.1.6",
+    "config": "^1.30.0",
+    "firebase": "^5.0.4",
+    "gulp": "^3.9.1",
+    "gulp-prompt": "^0.2.0",
+    "gulp-ssh": "^0.6.0",
+    "inquirer": "^3.0.1",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
