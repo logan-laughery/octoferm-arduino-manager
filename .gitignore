@@ -1,5 +1,6 @@
 # Prod configuration
 config/production.json
+config/keys/sa.json
 
 # Logs
 logs

@@ -12,6 +12,7 @@
     "bluetooth-serial-port": "^2.1.6",
     "config": "^1.30.0",
     "firebase": "^5.0.4",
+    "firebase-admin": "^5.12.1",
     "gulp": "^3.9.1",
     "gulp-prompt": "^0.2.0",
     "gulp-ssh": "^0.6.0",
