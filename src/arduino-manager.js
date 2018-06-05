@@ -4,6 +4,8 @@
 // node octoferm-manager.js 2 < /dev/null > ferm1.log 2>&1 &
 
 const FermentorCycle = require('./services/fermentor-cycle');
+const logger = require('./logger.js');
+const config = require('config');
 
 const stdin = process.stdin;
 const deviceId = process.argv[2];
@@ -26,11 +28,25 @@ function main(devId) {
     return;
   }
 
-  console.log('DeviceId: ' + devId);
+  logger.info(`Device id: ${devId}`);
 
-  const fermCycle = new FermentorCycle(address, devId);
+  var config = config.get('firebaseConfig');
+  
+  firebase.initializeApp(config);
 
-  loop(fermCycle);
+  firebase.database().ref(`/users/${devId}`).once('value')
+    .then((device) => {
+      if (!device.val() || !device.val().address) {
+        logger.error(`Device not found in database`);
+        return;
+      }
+
+      logger.info(`Device Address: ${device.val().address}`);
+
+      const fermCycle = new FermentorCycle(device.val().address, devId);
+
+      loop(fermCycle);
+    });
 }
 
 main(deviceId)

@@ -1,3 +1,6 @@
+# Prod configuration
+config/production.json
+
 # Logs
 logs
 *.log
