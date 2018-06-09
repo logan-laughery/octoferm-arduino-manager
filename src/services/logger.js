@@ -4,6 +4,13 @@ function info(message) {
   console.log(`${timeStamp} - INFO - ${message}`);
 }
 
+function debug(message) {
+  const timeStamp = new Date();
+
+  // Make this configurable
+  // console.log(`${timeStamp} - DEBUG - ${message}`);
+}
+
 function warn(message) {
   const timeStamp = new Date();
 
@@ -23,6 +30,7 @@ function error(message) {
 
 module.exports = {
   info,
+  debug,
   warn,
   error
 };

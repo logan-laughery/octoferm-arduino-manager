@@ -12,6 +12,7 @@ const config = require('config');
 const stdin = process.stdin;
 const deviceId = process.argv[2];
 const address = process.argv[3];
+let errorCount = 0;
 
 function delayPromise(delay) {
   return new Promise((res, rej) => setTimeout(res, delay));
@@ -20,13 +21,37 @@ function delayPromise(delay) {
 function loop(fermCycle) {
   return delayPromise(500)
     .then(() => fermCycle.loop())
-    .catch((err) => console.error("Error: " + err))
-    .then(() => loop(fermCycle));
+    .then(() => {
+      errorCount = 0;
+    })
+    .catch((err) => {
+      errorCount++;
+      logger.error(`${err} : Cycle has now failed ${errorCount} time(s) in a row.`);
+
+      if(errorCount > 3) {
+        throw new Error(`Fermentation exceeded maximum allowed sequential failures`);
+      }
+
+      return loop(fermCycle);
+    })
+    .then(() => {
+      return loop(fermCycle);
+    })
+}
+
+function updateErrorCount() {
+  return admin.database().ref(`/devices/${deviceId}`).once('value')
+    .then((device) => {
+      const errorCount = device.val().errorCount || 0;
+   
+      return admin.database().ref(`/devices/${deviceId}/errorCount`)
+        .set(errorCount + 1);
+    });
 }
 
 async function main(devId) {
   if (!devId) {
-    console.error('Must provide device id');
+    logger.error('Must provide device id');
     process.exit(1);
   }
 
@@ -48,7 +73,11 @@ async function main(devId) {
 
       const fermCycle = new FermentorCycle(device.val().address, devId);
 
-      loop(fermCycle);
+      return loop(fermCycle);
+    })
+    .catch((err) => {
+      logger.error('Job terminated. ' + err);
+      return updateErrorCount();
     });
 
   process.exit(2);
