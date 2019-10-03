@@ -1,0 +1,12 @@
+{
+  "extends": [
+    "airbnb-base"
+  ],
+  "settings": {
+    "import/resolver": {
+      "alias": [
+        ["@src", "./src"]
+      ]
+    }
+  }
+}

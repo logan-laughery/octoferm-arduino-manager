@@ -1,0 +1,21 @@
+{
+  "presets": [
+    "@babel/preset-env"
+  ],
+  "plugins": [
+    "@babel/transform-runtime",
+    "dynamic-import-node-babel-7",
+    [
+      "module-resolver",
+      {
+        "root": [
+          "./src"
+        ],
+        "alias": {
+          "@root": "./",
+          "@src": "./src"
+        }
+      }
+    ]
+  ]
+}
