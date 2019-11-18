@@ -28,6 +28,8 @@
     "eslint": "^6.3.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-plugin-import": "^2.18.2"
+    "eslint-plugin-import": "^2.18.2",
+    "why-is-node-running": "^2.1.0",
+    "wtfnode": "^0.8.0"
   }
 }
