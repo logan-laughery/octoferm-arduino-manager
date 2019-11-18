@@ -1,6 +1,7 @@
 import admin from 'firebase-admin';
 
 let database;
+let app;
 
 async function getServiceAccount() {
   return await import('@root/octoferm-firebase-adminsdk.json');
@@ -9,12 +10,12 @@ async function getServiceAccount() {
 export async function setupConnection() {
   const serviceAccount = await getServiceAccount();
 
-  admin.initializeApp({
+  app = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://octoferm.firebaseio.com"
   });
 
-  database = admin.database();
+  database = app.database();
 }
 
 export function getConnection() {
@@ -23,4 +24,10 @@ export function getConnection() {
   }
 
   return database;
+}
+
+export function close() {
+  database.ref().off();
+  database.goOffline();
+  app.delete();
 }

@@ -5,8 +5,6 @@ class OctofermDevice {
   constructor(address) {
     this.address = address;
 
-    logger.info(`Connecting to: ${address}`);
-
     this.device = new BluetoothDevice(address);
   }
 
@@ -17,7 +15,7 @@ class OctofermDevice {
   async getMemory() {
     const result = await this.sendCommand('memstatus', 'memstatus:', 3);
 
-    const memory = result.substring(0, res.length - 1)
+    const memory = result.substring(0, result.length - 1)
       .split(':')[1];
 
     return {
@@ -25,10 +23,14 @@ class OctofermDevice {
     };
   }
 
+  async ping() {
+    await this.sendCommand('ping', 'ping', 3);
+  }
+
   async getState() {
     const result = await this.sendCommand('gs', 'gs:', 3);
 
-    const vals = result.substring(0, res.length - 1)
+    const vals = result.substring(0, result.length - 1)
       .split(':')[1].split('|');
 
     return {
@@ -40,13 +42,14 @@ class OctofermDevice {
   async getSettings() {
     const result = await this.sendCommand('getsettings', 'getsettings:', 3);
 
-    const vals = result.substring(0, res.length - 1)
+    const vals = result.substring(0, result.length - 1)
       .split(':')[1].split('|');
 
     return {
       temperature: vals[0],
       autoPump: vals[1] === '1',
-      pumpOn: vals[2] === '1'
+      pumpOn: vals[2] === '1',
+      isHeating: vals[3] === '1'
     };
   }
 
@@ -54,7 +57,17 @@ class OctofermDevice {
     const command = 'temp:' + temp;
     const result = await this.sendCommand(command, 'temp', 3);
     
-    logger.info(`Set temp to: ${temp}`);
+    logger.debug(`Set temp to: ${temp}`);
+
+    return result;
+  }
+
+  async setHeating(isHeating) {
+    const heatingState = isHeating ? '1' : '0';
+    const command = 'h:' + heatingState;
+    const result = await this.sendCommand(command, 'h', 3);
+    
+    logger.debug(`Set heating to: ${heatingState}`);
 
     return result;
   }
@@ -63,7 +76,7 @@ class OctofermDevice {
     const command = 'state:' + state;
     const result = await this.sendCommand(command, 'state', 3);
     
-    logger.info(`Set pump state to: ${state}`);
+    logger.debug(`Set pump state to: ${state}`);
 
     return result;
   }
@@ -74,7 +87,7 @@ class OctofermDevice {
     try {
       return await this.device.executeCommand(command, expected, 1000);
     } catch (err) {
-      logger.warn(
+      logger.debug(
         `Command '${command}' failed. '${remainingAttempts}' attempt(s) remaining.` + 
         ` Error: ${err}`
       );
@@ -92,15 +105,23 @@ class OctofermDevice {
 
     // Set temp
     if (desired.temperature != actual.temperature) {
-      logger.warn(`Need to set temp - Actual: ${actual.temperature}` + 
+      logger.debug(`Need to set temp - Actual: ${actual.temperature}` + 
         ` Desired: ${desired.temperature}`);
 
       await this.setTemp(desired.temperature);
     }
 
+    // Set heater
+    if (desired.isHeating != actual.isHeating) {
+      logger.debug(`Need to set heating state - Actual: ${actual.isHeating}` + 
+        ` Desired: ${desired.isHeating}`);
+
+      await this.setHeating(desired.isHeating);
+    }
+
     // Set pump to auto
     if (desired.pumpState === 'auto' && !actual.autoPump) {
-      logger.warn(`Need to set pump to ` + 
+      logger.debug(`Need to set pump to ` + 
         `auto. Desired: ${desired.pumpState}`);
       
       await this.setPump(0);
@@ -108,14 +129,14 @@ class OctofermDevice {
 
     // Set pump on
     if (desired.pumpState === 'on' && (!actual.pumpOn || actual.autoPump)) {
-      logger.warn(`Need to turn pump on.  Desired: ${desired.pumpState}`);
+      logger.debug(`Need to turn pump on.  Desired: ${desired.pumpState}`);
       
       await this.setPump(1);
     }
        
     // Set pump off
     if (desired.pumpState === 'off' && (actual.pumpOn || actual.autoPump)) {
-      logger.warn(`Need to turn pump off.  Desired: ${desired.pumpState}`);
+      logger.debug(`Need to turn pump off.  Desired: ${desired.pumpState}`);
 
       await this.setPump(2);
     }

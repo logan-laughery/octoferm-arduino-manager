@@ -1,5 +1,6 @@
 import {BluetoothSerialPort} from 'bluetooth-serial-port';
 import logger from '@src/utils/logger';
+import {promiseTimeout} from '@src/utils/promiseHelpers';
 
 class BluetoothDevice {
   constructor(address) {
@@ -8,12 +9,12 @@ class BluetoothDevice {
     this.received = '';
     this.expected = '';
     this.serial = new BluetoothSerialPort();
-    this.serial.on('data', this.dataCallback);
+    this.serial.on('data', this.dataCallback.bind(this));
     this.serial.on('closed', this.closed);
-    this.serial.on('failure', this.closed);  
+    this.serial.on('failure', this.closed);
   }
 
-  dataCallback() {
+  close() {
     this.serial.close();
   }
 
@@ -26,6 +27,21 @@ class BluetoothDevice {
       if (this.connected) {
         resolve('Already connected');
       } else {
+        let isDeviceFound = false;
+
+        this.serial.on('found', (address, name) => {
+          logger.debug(`Found - ${name} : ${address}`);
+          if (address === this.address) {
+            isDeviceFound = true;
+          }
+        });
+
+        this.serial.inquireSync();
+
+        if (!isDeviceFound) {
+          return reject(`Failed to find device: ${this.address}`);
+        }
+
         this.serial.findSerialPortChannel(this.address, (channel) => {
           this.serial.connect(this.address, channel, () => {
             this.connected = true;
@@ -35,8 +51,8 @@ class BluetoothDevice {
             this.connected = false;
             reject('Connection failed for Address: ' + this.address);
           });
-        }, () => {
-          logger.info('Failed finding port');
+        }, (err) => {
+          logger.debug(`Failed finding port`);
           reject('Find Port failed for Address: ' + this.address);
         });
       }
@@ -60,9 +76,8 @@ class BluetoothDevice {
       return;
     }
 
-    response.forEach(character => {
+    response.split('').forEach(character => {
       this.received += character;
-
       if (character === '{') {
         this.received = '{';
       } else if (character === '}') {
@@ -78,7 +93,7 @@ class BluetoothDevice {
   }
 
   sendCommand(command, response, timeout) {
-    return new Promise((resolve, reject) => {
+    const commandRequest = new Promise((resolve, reject) => {
       this.currentResolve = resolve;
       this.currentReject = reject;
       this.expected = '{' + response;
@@ -86,15 +101,14 @@ class BluetoothDevice {
       const wrappedCommand = '{' + command + '}';
       logger.debug('Sending: ' + wrappedCommand);
 
-      this.serial.write(new Buffer(wrappedCommand, 'utf-8'), (err, bytesWritten) => {
-        if (err) reject(err);
+      this.serial.write(Buffer.from(wrappedCommand), (err, bytesWritten) => {
+        if (err && this.currentReject) {
+          this.currentReject(err);
+        }
       });
-
-      setTimeout(() => {
-        reject('Command timeout with no response.  Expected: {' + response
-          + '  Got: ' + this.received);
-      }, timeout);
     });
+
+    return promiseTimeout(commandRequest, timeout);
   }
 
   async executeCommand(command, response, timeout) {

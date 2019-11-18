@@ -27,12 +27,12 @@ async function turnOnScan() {
   logger.log(stdout);
 }
 
-async function powerOn() {
+export async function powerOn() {
   const { execPromise } = execAsync('bluetoothctl -- power on');
 
   const { stdout } = await execPromise;
 
-  logger.log(stdout);
+  logger.info(stdout);
 }
 
 async function listDevices() {
@@ -54,24 +54,24 @@ async function pair(mac, password, sleep) {
   await execPromise;
 }
 
-async function scan() {
-  logger.log('Check Bluetoothctl Version');
-  await getVersion();
+// async function scan() {
+//   logger.log('Check Bluetoothctl Version');
+//   await getVersion();
 
-  logger.log('Powering On');
-  await powerOn();
+//   logger.log('Powering On');
+//   await powerOn();
 
-  logger.log('Scan On');
-  await turnOnScan();
+//   logger.log('Scan On');
+//   await turnOnScan();
 
-  logger.log('Listing Devices');
-  await listDevices();
+//   logger.log('Listing Devices');
+//   await listDevices();
 
-  logger.log('Check Expect Version');
-  await getExpectVersion();
+//   logger.log('Check Expect Version');
+//   await getExpectVersion();
 
-  logger.log('Pairing');
-  await pair('98:D3:31:FD:68:8F', '1234', 10);
-}
+//   logger.log('Pairing');
+//   await pair('98:D3:31:FD:68:8F', '1234', 10);
+// }
 
-export default scan;
+// export default scan;
